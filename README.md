@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🗺️ GMaps Playwright Scraper  
-### Modular Local Business Data Extraction Engine
+### Motor modular de extração de dados de negócios locais
 
 <p>
   <img src="https://img.shields.io/badge/Python-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
