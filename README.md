@@ -1,54 +1,227 @@
 <div align="center">
 
-# 🗺️ GMaps Playwright Scraper
-### Inteligência de Mercado & Extração de Dados Locais
+# 🗺️ GMaps Playwright Scraper  
+### Modular Local Business Data Extraction Engine
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?style=for-the-badge&logo=python)
-![Playwright](https://img.shields.io/badge/Playwright-Automated-green?style=for-the-badge&logo=playwright)
-![Pandas](https://img.shields.io/badge/Pandas-Data_Analysis-150458?style=for-the-badge&logo=pandas)
-![Status](https://img.shields.io/badge/Status-Active-success?style=for-the-badge)
+<p>
+  <img src="https://img.shields.io/badge/Python-3.9%2B-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Playwright-Chromium%20Automation-2EAD33?style=for-the-badge&logo=playwright&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Architecture-Modular%20Layered-informational?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/Status-Active-success?style=for-the-badge"/>
+</p>
 
-<p align="center">
-  Uma ferramenta robusta de <b>Web Scraping</b> focada na extração de leads qualificados do Google Maps.<br>
-  Projetada para superar bloqueios, carregar listas infinitas e extrair dados visuais com precisão.
+<p>
+  Engine de scraping modular para extração estruturada  
+  de dados públicos do Google Maps com persistência incremental  
+  e consolidação determinística.
 </p>
 
 </div>
 
 ---
 
-## 📋 Sobre o Projeto
+#  Objetivo
 
-Este projeto é um extrator de dados de alta performance desenvolvido para mapear estabelecimentos comerciais. Diferente de scrapers tradicionais baseados em requisições HTTP (que são facilmente bloqueados), este projeto utiliza o **Playwright** para simular um navegador real (Chromium).
+Construir um **motor resiliente de coleta de dados geolocalizados**, com:
 
-Atualmente, o projeto está configurado para uma varredura granular (nível de bairro) na cidade de **Belo Horizonte/MG**, focada no mercado de **Beleza e Estética**.
-
-### 🚀 Diferenciais Técnicos
-
-* **🔍 Navegação Direta:** Constrói URLs de busca dinâmicas para evitar a interação com a barra de pesquisa, reduzindo drasticamente a detecção de bots.
-* **👁️ Extração Visual (Visual Regex):** Ignora metadados ocultos (que o Google altera frequentemente) e captura a nota e quantidade de avaliações lendo o texto renderizado na tela (ex: `4,8 (1.205)`).
-* **🛡️ Evasão de Bloqueios:** Utiliza User-Agent de navegador real (Chrome/Windows), delays aleatórios e scrolls humanizados.
-* **💾 Persistência Incremental:** Salva arquivos parciais (`.csv`) a cada bairro finalizado. Se o script for interrompido, os dados coletados até o momento estão seguros.
-* **🧩 Consolidação Inteligente:** Inclui um script dedicado para unificar os arquivos parciais e remover duplicatas (Deduplicação por `Nome + Endereço`).
+- Segmentação por bairro
+- Extração baseada em renderização real (Chromium)
+- Estratégias básicas de mitigação de bloqueios
+- Persistência tolerante a falhas
+- Consolidação determinística de resultados
 
 ---
 
-## 🛠️ Stack Tecnológica
+#  Arquitetura Atual
 
-| Tecnologia | Função |
-| :--- | :--- |
-| **Python 3.9+** | Linguagem base. |
-| **Playwright** | Automação de navegador e renderização de JS. |
-| **Pandas** | Manipulação de DataFrames, limpeza e exportação (CSV/Excel). |
-| **Regex** | Extração de padrões textuais complexos. |
+O projeto segue uma **arquitetura modular em camadas**, com separação clara entre configuração, orquestração, serviços e modelo de dados.
+
+```mermaid
+flowchart LR
+
+    A[config.py<br/>Configurações Globais]
+        --> B[main.py<br/>Orquestrador]
+
+    B --> C[services/scraper_service.py<br/>Engine Playwright]
+    B --> D[services/export_service.py<br/>Exportação CSV]
+
+    C --> E[models/establishment.py<br/>Modelo de Dados]
+    C --> F[output/*.csv]
+
+    F --> G[juntar_dados.py<br/>Consolidação e Deduplicação]
+```
+
+
+
+#  Estratégia Técnica
+
+##  1. Navegação Determinística
+
+Evita interação excessiva com a UI sempre que possível.  
+As URLs de busca são construídas diretamente para reduzir dependência de cliques e heurísticas frágeis.
 
 ---
 
-## 📦 Instalação e Configuração
+##  2. Extração Baseada em Renderização
 
-Siga os passos abaixo para preparar o ambiente de desenvolvimento.
+Em vez de depender exclusivamente de atributos HTML instáveis:
 
-### 1. Clonar o Repositório
+- Captura texto renderizado na página
+- Aplica Regex sobre o texto visível
+- Exemplo extraído: `4,8 (1.205)`
+
+Isso reduz quebras causadas por mudanças estruturais frequentes do Google Maps.
+
+---
+
+##  3. Mitigação de Bloqueios
+
+- User-Agent realista (Chrome / Windows)
+- Scroll incremental
+- Delays randômicos
+- Controle implícito de taxa por bairro
+
+---
+
+##  4. Persistência Incremental
+
+Cada bairro gera um CSV independente.
+
+Benefícios:
+
+- Recuperação após falha
+- Execução interrompida não perde dados anteriores
+- Permite futura paralelização
+
+---
+
+##  5. Deduplicação Determinística
+
+A consolidação global utiliza a seguinte chave lógica:
+
+```
+Nome + Endereço
+```
+
+Isso reduz duplicidade entre bairros limítrofes.
+
+---
+
+#  Estrutura do Projeto
+
 ```bash
-git clone [https://github.com/seu-usuario/gmaps-playwright-scraper.git](https://github.com/seu-usuario/gmaps-playwright-scraper.git)
-cd gmaps-playwright-scraper
+gmaps-playwright-scraper/
+│
+├── config.py                 # Configurações globais do scraper
+├── main.py                   # Orquestrador principal da execução
+├── juntar_dados.py           # Consolidação e deduplicação
+├── requirements.txt          # Dependências do projeto
+│
+├── models/
+│   └── establishment.py      # Representação da entidade coletada
+│
+├── services/
+│   ├── scraper_service.py    # Lógica principal de scraping (Playwright)
+│   └── export_service.py     # Exportação e manipulação via Pandas
+│
+├── output/                   # CSVs parciais e consolidados
+├── scraper.log               # Log de execução
+└── settings.json             # Configurações auxiliares
+```
+
+---
+
+# 🧬 Modelo de Dados
+
+`Establishment`
+
+| Campo     | Tipo   | Descrição |
+|-----------|--------|------------|
+| nome      | str    | Nome do estabelecimento |
+| endereco  | str    | Endereço completo |
+| telefone  | str    | Telefone público |
+| rating    | float  | Nota média |
+| reviews   | int    | Quantidade de avaliações |
+| bairro    | str    | Bairro da coleta |
+| categoria | str    | Termo pesquisado |
+
+---
+
+#  Configuração
+
+Arquivo: `config.py`
+
+| Variável | Papel |
+|----------|--------|
+| `BAIRROS_BH` | Domínio geográfico da coleta |
+| `TERMOS` | Domínio de mercado (ex: pizzaria, academia) |
+| `MAX_RESULTS_PER_CITY` | Controle de volume por execução |
+| `HEADLESS` | Execução visível ou silenciosa |
+
+---
+
+#  Execução
+
+## 1️⃣ Instalar dependências
+
+```bash
+pip install -r requirements.txt
+playwright install
+```
+
+## 2️⃣ Rodar coleta
+
+```bash
+python main.py
+```
+
+## 3️⃣ Consolidar dados
+
+```bash
+python juntar_dados.py
+```
+
+---
+
+#  Pipeline de Execução
+
+```mermaid
+flowchart TD
+
+    A[Carregar Configuração] --> B[Iterar Bairros]
+    B --> C[Iterar Termos]
+    C --> D[Scraping via Playwright]
+
+    D --> E[Normalização de Dados]
+    E --> F[Persistência CSV Parcial]
+
+    F --> G[Consolidação Global]
+    G --> H[Deduplicação Determinística]
+
+    H --> I[CSV Consolidado Final]
+```
+
+---
+
+
+# ⚠️ Considerações Legais
+
+Projeto destinado a:
+
+- Educação
+- Pesquisa de Mercado
+- Análise de Dados Públicos
+
+O uso deve respeitar:
+
+- Termos de Serviço da plataforma
+- Limites de requisição
+- LGPD (Brasil) quando aplicável
+
+---
+
+<div align="center">
+
+### Engenharia modular aplicada a Web Scraping.
+
+</div>
