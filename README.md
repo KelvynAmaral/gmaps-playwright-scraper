@@ -34,7 +34,7 @@ Construir um **motor resiliente de coleta de dados geolocalizados**, com:
 
 #  Arquitetura Atual
 
-O projeto segue uma **arquitetura modular em camadas**, com separação clara entre configuração, orquestração, serviços e modelo de dados.
+O projeto segue uma **arquitetura modular em camadas**, com separação entre configuração, orquestração, serviços e modelo de dados.
 
 ```mermaid
 flowchart LR
